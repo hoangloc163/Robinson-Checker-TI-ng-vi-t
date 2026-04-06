@@ -1,0 +1,5 @@
+{
+  "name": "Robinson Auto-Checker",
+  "description": "Ứng dụng hỗ trợ kiểm tra logic mệnh đề bằng thuật toán hợp giải Robinson và chuẩn hóa CNF từng bước.",
+  "requestFramePermissions": []
+}
