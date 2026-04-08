@@ -5,6 +5,9 @@
 
 import { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'motion/react';
+import 'katex/dist/katex.min.css';
+import { InlineMath } from 'react-katex';
+import { GoogleGenAI } from '@google/genai';
 import { 
   Calculator, 
   BookOpen, 
@@ -25,17 +28,16 @@ import {
 } from 'lucide-react';
 
 // Types based on PRD
-interface Step {
-  id: number;
-  description: string;
+interface LogicStep {
+  step_number: number;
   formula: string;
+  derivation: string;
 }
 
-interface ResolutionStep {
-  id: number;
-  clause1: string;
-  clause2: string;
-  result: string;
+interface LogicResult {
+  status: string;
+  is_proved: boolean;
+  steps: LogicStep[];
 }
 
 interface SampleExercise {
@@ -46,17 +48,34 @@ interface SampleExercise {
   solution: string;
 }
 
+const toLatex = (text: string) => {
+  if (!text) return '';
+  let latex = text
+    .replace(/<->/g, '\\leftrightarrow ')
+    .replace(/=>/g, '\\rightarrow ')
+    .replace(/->/g, '\\rightarrow ')
+    .replace(/~/g, '\\neg ')
+    .replace(/\^/g, '\\wedge ')
+    .replace(/&/g, '\\wedge ')
+    .replace(/v/g, '\\vee ')
+    .replace(/\|/g, '\\vee ')
+    .replace(/\[\]/g, '\\square ')
+    .replace(/□/g, '\\square ')
+    .replace(/\{/g, '\\{ ')
+    .replace(/\}/g, '\\} ');
+  
+  // Wrap Vietnamese text in \text{} if it's inside parentheses
+  latex = latex.replace(/\(([^)]+)\)/g, '\\text{($1)}');
+  return latex;
+};
+
 export default function App() {
   const [view, setView] = useState<'landing' | 'dashboard' | 'resources'>('landing');
   const [logicType, setLogicType] = useState<'propositional' | 'predicate'>('propositional');
   const [premises, setPremises] = useState<string>('');
   const [conclusion, setConclusion] = useState<string>('');
   const [isProcessing, setIsProcessing] = useState(false);
-  const [results, setResults] = useState<{
-    cnfSteps: Step[];
-    resolutionSteps: ResolutionStep[];
-    isValid: boolean;
-  } | null>(null);
+  const [results, setResults] = useState<LogicResult | null>(null);
   const [usageCount, setUsageCount] = useState(20);
   const [error, setError] = useState<string | null>(null);
   const [showOCRModal, setShowOCRModal] = useState(false);
@@ -86,7 +105,7 @@ export default function App() {
     }
   }, []);
 
-  const handleCheck = () => {
+  const handleCheck = async () => {
     if (usageCount <= 0) {
       setError("Bạn đã hết lượt dùng trong ngày. Vui lòng quay lại sau!");
       return;
@@ -99,25 +118,80 @@ export default function App() {
 
     setIsProcessing(true);
     setError(null);
+    setResults(null);
 
-    // Simulate API processing
-    setTimeout(() => {
-      setResults({
-        cnfSteps: [
-          { id: 1, description: "Loại bỏ phép kéo theo: p -> q", formula: "~p | q" },
-          { id: 2, description: "Phủ định kết luận: q", formula: "~q" }
-        ],
-        resolutionSteps: [
-          { id: 1, clause1: "{~p, q}", clause2: "{~q}", result: "{~p}" },
-          { id: 2, clause1: "{~p}", clause2: "{p}", result: "□ (Mâu thuẫn)" }
-        ],
-        isValid: true
+    try {
+      const ai = new GoogleGenAI({ apiKey: process.env.GEMINI_API_KEY });
+      
+      const prompt = `Bạn là một chuyên gia logic học và là một bộ máy suy diễn (Inference Engine) phục vụ cho một ứng dụng Web giáo dục.
+Nhiệm vụ của bạn là giải các bài toán logic mệnh đề bằng thuật toán hợp giải Robinson (Resolution Algorithm) và trả về kết quả ĐỘC QUYỀN dưới định dạng JSON để Frontend hiển thị từng bước cho sinh viên.
+
+Quy trình bạn PHẢI tuân thủ trong suy nghĩ trước khi trả kết quả:
+1. Nhận đầu vào là danh sách các "Mệnh đề cho trước" (Premises) và "Kết luận cần chứng minh" (Conclusion).
+2. Chuẩn hóa tất cả "Mệnh đề cho trước" về dạng câu tuyển (Clause Form / CNF). Ví dụ: P => R chuyển thành ~P v R.
+3. Phủ định "Kết luận" và chuyển nó về dạng câu tuyển.
+4. Liệt kê các câu tuyển ban đầu này vào danh sách các bước đầu tiên.
+5. Thực hiện lặp lại phép hợp giải (Resolution) giữa 2 câu tuyển bất kỳ có chứa cặp Literal đối nghịch (ví dụ: P và ~P) để sinh ra câu tuyển mới (Resolvent).
+6. Ghi chú rõ câu tuyển mới được tạo ra từ 2 bước nào trước đó.
+7. Dừng lại khi tạo ra được câu tuyển rỗng (kí hiệu là "[]" hoặc "Mâu thuẫn") hoặc không thể sinh thêm câu tuyển mới.
+
+QUY TẮC BẮT BUỘC:
+- CHỈ trả về một chuỗi JSON hợp lệ, không kèm theo bất kỳ văn bản giải thích nào khác bên ngoài (không dùng markdown \`\`\`json).
+- Sử dụng các ký hiệu ASCII chuẩn: 'v' cho phép HOẶC, '^' cho phép VÀ, '~' cho phép PHỦ ĐỊNH, '=>' cho phép KÉO THEO. Câu tuyển rỗng ký hiệu là "[]".
+
+Định dạng JSON đầu ra mong muốn:
+{
+  "status": "success",
+  "is_proved": true,
+  "steps": [
+    {
+      "step_number": 1,
+      "formula": "P v Q",
+      "derivation": "Cho trước"
+    },
+    {
+      "step_number": 4,
+      "formula": "~R",
+      "derivation": "Phủ định kết luận"
+    },
+    {
+      "step_number": 5,
+      "formula": "Q v R",
+      "derivation": "1, 2" 
+    }
+  ]
+}
+
+Đầu vào:
+- Mệnh đề cho trước:
+${premises}
+- Kết luận cần chứng minh:
+${conclusion}`;
+
+      const response = await ai.models.generateContent({
+        model: 'gemini-2.5-flash',
+        contents: prompt,
+        config: {
+          responseMimeType: 'application/json',
+          temperature: 0.1,
+        }
       });
+
+      if (response.text) {
+        const data = JSON.parse(response.text) as LogicResult;
+        setResults(data);
+        const newCount = usageCount - 1;
+        setUsageCount(newCount);
+        localStorage.setItem('robinson_usage_count', newCount.toString());
+      } else {
+        throw new Error("Empty response from AI");
+      }
+    } catch (err) {
+      console.error(err);
+      setError('Đã xảy ra lỗi trong quá trình xử lý. Vui lòng kiểm tra lại cú pháp hoặc thử lại sau.');
+    } finally {
       setIsProcessing(false);
-      const newCount = usageCount - 1;
-      setUsageCount(newCount);
-      localStorage.setItem('robinson_usage_count', newCount.toString());
-    }, 1500);
+    }
   };
 
   const reset = () => {
@@ -289,11 +363,12 @@ export default function App() {
                     <div className="rounded-lg bg-amber-50 p-4 text-xs text-amber-700">
                       <p className="font-bold mb-1">Ký hiệu hỗ trợ:</p>
                       <div className="grid grid-cols-2 gap-2">
-                        <span>~ : Phủ định (NOT)</span>
-                        <span>& : Hội (AND)</span>
-                        <span>| : Tuyển (OR)</span>
-                        <span>-&gt; : Kéo theo</span>
-                        <span>&lt;-&gt; : Tương đương</span>
+                        <span className="flex items-center gap-1">~ : Phủ định (<InlineMath math="\neg" />)</span>
+                        <span className="flex items-center gap-1">^ : Hội (<InlineMath math="\wedge" />)</span>
+                        <span className="flex items-center gap-1">v : Tuyển (<InlineMath math="\vee" />)</span>
+                        <span className="flex items-center gap-1">=&gt; : Kéo theo (<InlineMath math="\rightarrow" />)</span>
+                        <span className="flex items-center gap-1">&lt;-&gt; : Tương đương (<InlineMath math="\leftrightarrow" />)</span>
+                        <span className="flex items-center gap-1">[] : Mâu thuẫn (<InlineMath math="\square" />)</span>
                       </div>
                     </div>
 
@@ -347,57 +422,43 @@ export default function App() {
                   ) : (
                     <div className="space-y-8">
                       {/* Status Header */}
-                      <div className={`rounded-xl p-4 ${results?.isValid ? 'bg-emerald-50 text-emerald-700' : 'bg-red-50 text-red-700'}`}>
+                      <div className={`rounded-xl p-4 ${results?.is_proved ? 'bg-emerald-50 text-emerald-700' : 'bg-red-50 text-red-700'}`}>
                         <div className="flex items-center gap-2 font-bold">
-                          {results?.isValid ? <CheckCircle2 className="h-5 w-5" /> : <AlertCircle className="h-5 w-5" />}
-                          Kết luận: {results?.isValid ? "Lập luận ĐÚNG" : "Lập luận SAI"}
+                          {results?.is_proved ? <CheckCircle2 className="h-5 w-5" /> : <AlertCircle className="h-5 w-5" />}
+                          Kết luận: {results?.is_proved ? "Lập luận ĐÚNG" : "Lập luận SAI"}
                         </div>
                         <p className="mt-1 text-sm opacity-90">
-                          {results?.isValid 
+                          {results?.is_proved 
                             ? "Tìm thấy mâu thuẫn trong tập hợp tiền đề và phủ định kết luận." 
                             : "Không tìm thấy mâu thuẫn sau khi thực hiện hợp giải."}
                         </p>
                       </div>
 
-                      {/* CNF Steps */}
+                      {/* Unified Steps */}
                       <div>
                         <h3 className="mb-3 flex items-center gap-2 font-bold text-slate-800">
                           <ChevronRight className="h-4 w-4 text-indigo-600" />
-                          Bước 1: Chuẩn hóa CNF
-                        </h3>
-                        <div className="space-y-2">
-                          {results?.cnfSteps.map((step) => (
-                            <div key={step.id} className="rounded-lg border border-slate-100 bg-slate-50 p-3">
-                              <div className="text-xs font-medium text-slate-500 uppercase tracking-wider">{step.description}</div>
-                              <div className="mt-1 font-mono text-sm text-indigo-700">{step.formula}</div>
-                            </div>
-                          ))}
-                        </div>
-                      </div>
-
-                      {/* Resolution Steps */}
-                      <div>
-                        <h3 className="mb-3 flex items-center gap-2 font-bold text-slate-800">
-                          <ChevronRight className="h-4 w-4 text-indigo-600" />
-                          Bước 2: Hợp giải Robinson
+                          Các bước Hợp giải Robinson
                         </h3>
                         <div className="overflow-hidden rounded-xl border border-slate-200">
                           <table className="w-full text-left text-sm">
                             <thead className="bg-slate-50 text-slate-600">
                               <tr>
-                                <th className="px-4 py-2 font-semibold">Bước</th>
-                                <th className="px-4 py-2 font-semibold">Mệnh đề 1</th>
-                                <th className="px-4 py-2 font-semibold">Mệnh đề 2</th>
-                                <th className="px-4 py-2 font-semibold">Kết quả</th>
+                                <th className="px-4 py-3 font-semibold">Bước</th>
+                                <th className="px-4 py-3 font-semibold">Công thức (Clause)</th>
+                                <th className="px-4 py-3 font-semibold">Nguồn gốc / Quy tắc</th>
                               </tr>
                             </thead>
-                            <tbody className="divide-y divide-slate-100">
-                              {results?.resolutionSteps.map((step) => (
-                                <tr key={step.id} className="hover:bg-slate-50/50">
-                                  <td className="px-4 py-3 font-medium text-slate-400">{step.id}</td>
-                                  <td className="px-4 py-3 font-mono text-slate-700">{step.clause1}</td>
-                                  <td className="px-4 py-3 font-mono text-slate-700">{step.clause2}</td>
-                                  <td className="px-4 py-3 font-mono font-bold text-indigo-600">{step.result}</td>
+                            <tbody className="divide-y divide-slate-100 bg-white">
+                              {results?.steps.map((step) => (
+                                <tr key={step.step_number} className="hover:bg-slate-50/50">
+                                  <td className="px-4 py-3 font-medium text-slate-400">{step.step_number}</td>
+                                  <td className="px-4 py-3 text-slate-700 text-base">
+                                    <InlineMath math={toLatex(step.formula)} />
+                                  </td>
+                                  <td className="px-4 py-3 text-slate-500 text-sm">
+                                    {step.derivation}
+                                  </td>
                                 </tr>
                               ))}
                             </tbody>
@@ -438,12 +499,16 @@ export default function App() {
                     <h3 className="mb-4 text-lg font-bold text-slate-900">{ex.title}</h3>
                     <div className="mb-6 flex-1 space-y-4">
                       <div className="rounded-lg bg-slate-50 p-3">
-                        <div className="text-xs font-bold uppercase text-slate-400">Tiền đề</div>
-                        <pre className="mt-1 font-mono text-sm text-slate-700">{ex.premises}</pre>
+                        <div className="text-xs font-bold uppercase text-slate-400 mb-2">Tiền đề</div>
+                        <div className="space-y-1">
+                          {ex.premises.split('\n').map((line, i) => (
+                            <div key={i} className="text-slate-700"><InlineMath math={toLatex(line)} /></div>
+                          ))}
+                        </div>
                       </div>
                       <div className="rounded-lg bg-slate-50 p-3">
-                        <div className="text-xs font-bold uppercase text-slate-400">Kết luận</div>
-                        <pre className="mt-1 font-mono text-sm text-slate-700">{ex.conclusion}</pre>
+                        <div className="text-xs font-bold uppercase text-slate-400 mb-2">Kết luận</div>
+                        <div className="text-slate-700"><InlineMath math={toLatex(ex.conclusion)} /></div>
                       </div>
                     </div>
                     <div className="flex gap-2">

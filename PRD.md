@@ -1,87 +1,80 @@
-# Robinson Auto-Checker - Product Requirements Document (PRD) v1.0
+# Product Requirements Document (PRD) v1.0 - Robinson Auto-Checker
 
 ## 1. Tổng quan & Mục tiêu (Overview & Goals)
-- **Tên dự án:** Robinson Auto-Checker.
-- **Mục tiêu:** Cung cấp công cụ hỗ trợ sinh viên ngành Công nghệ thông tin/Toán tin tự học và kiểm tra bài tập Logic mệnh đề/vị từ. Hệ thống giúp minh bạch hóa quá trình biến đổi CNF và thuật toán hợp giải Robinson.
-- **Giá trị cốt lõi:** Chính xác, chi tiết từng bước, giao diện thân thiện, hỗ trợ đối chiếu bài làm.
+- **Tên sản phẩm:** Robinson Auto-Checker
+- **Mục tiêu:** Xây dựng một ứng dụng Web giáo dục giúp sinh viên nhập công thức logic mệnh đề (và sau này là vị từ), tự động chuẩn hóa CNF, kiểm tra tính đúng đắn bằng thuật toán hợp giải Robinson và hiển thị chi tiết từng bước.
+- **Giá trị cốt lõi:** Giúp sinh viên đối chiếu bài làm, hiểu rõ từng bước giải thay vì chỉ nhận kết quả cuối cùng.
 
-## 2. Phạm vi (Scope)
+## 2. Phạm vi dự án (Scope)
+### 2.1. In-scope (MVP - Giai đoạn 1 & 2)
+- **Giao diện (Frontend):** Landing page giới thiệu, Form nhập liệu văn bản.
+- **Xử lý Logic Mệnh đề:** Hỗ trợ các công thức logic mệnh đề cơ bản.
+- **Chuẩn hóa CNF:** Trình bày chi tiết từng bước biến đổi, báo trạng thái Xanh (Đúng) / Đỏ (Sai kèm giải thích).
+- **Thuật toán Hợp giải Robinson:** Thêm phủ định kết luận, chạy vòng lặp tìm mâu thuẫn, xuất dãy hợp giải (từng cặp mệnh đề).
+- **Quản lý lượt dùng:** Giới hạn số lượt kiểm tra (VD: 20 lượt/ngày) dựa trên IP/Thiết bị.
 
-### 2.1. Trong phạm vi (MVP - Giai đoạn 1 & 2)
-- **Logic mệnh đề (Propositional Logic):** Hỗ trợ các biến mệnh đề (p, q, r...) và các phép nối cơ bản.
-- **Chuẩn hóa CNF (Conjunctive Normal Form):** Trình bày chi tiết từng bước biến đổi (loại bỏ `->`, phủ định, phân phối).
-- **Thuật toán hợp giải Robinson (Resolution):** Thêm phủ định kết luận, tìm mâu thuẫn, xuất dãy hợp giải.
-- **Giao diện Web:** 
-    - Landing page (2 nút: Nhập text & Tải ảnh).
-    - Form nhập liệu text (Tiền đề + Kết luận).
-    - Trang kết quả 2 bước (CNF & Robinson).
-    - Trang "Tài nguyên" (Bài tập mẫu & Lời giải chi tiết).
-- **Quản lý lượt dùng:** Giới hạn 20 lượt kiểm tra/ngày dựa trên IP/Thiết bị.
+### 2.2. Out-of-scope (Future Phases 3 & 4)
+- **Giai đoạn 3:** Upload ảnh/file PDF, tích hợp OCR (trích xuất mệnh đề từ ảnh), mở rộng hỗ trợ Logic Vị từ (có biến, unification), Tree visualization cho bước hợp giải.
+- **Giai đoạn 4:** Tích hợp hệ thống tài khoản (Login), trang "Tài nguyên/Bài tập mẫu", tích hợp LMS (Moodle/Canvas), tạo channel cộng đồng.
 
-### 2.2. Ngoài phạm vi (Giai đoạn 3 & 4 - Future Enhancements)
-- **Logic vị từ (Predicate Logic):** Xử lý biến, lượng từ ($\forall, \exists$) và phép hợp nhất (Unification).
-- **OCR (Optical Character Recognition):** Nhận diện công thức từ ảnh chụp bài làm (Tesseract/Vision API).
-- **So sánh bài làm:** Hệ thống phân tích bài làm của sinh viên (từ OCR) và so sánh với kết quả đúng để chỉ ra lỗi sai.
-- **Tích hợp LMS:** Kết nối với Moodle/Canvas cho giảng viên.
-- **Hệ thống Tài khoản:** Đăng nhập để lưu lịch sử bài tập.
-
-## 3. Sơ đồ Flow UX (User Flow)
-1. **Trang chủ:** Giới thiệu + Nút "Nhập công thức" / "Tải ảnh bài làm".
-2. **Nhập liệu:** Form văn bản (Tiền đề + Kết luận) + Chọn loại (Mệnh đề/Vị từ).
-3. **Kết quả Bước 1 (CNF):** Hiển thị công thức gốc -> Các bước biến đổi -> Trạng thái (Xanh/Đỏ).
-4. **Kết quả Bước 2 (Robinson):** Dãy hợp giải (từng cặp mệnh đề) -> Kết luận (Đúng/Sai).
-5. **Giới hạn:** Thanh thông báo số lượt còn lại (VD: 12/20).
+## 3. Đối tượng người dùng (Personas)
+- **Sinh viên:** Người học môn Cơ sở tri thức / Toán rời rạc. Cần công cụ để kiểm tra lại bài tập về nhà, xem chi tiết từng bước biến đổi CNF và hợp giải để hiểu bài sâu hơn.
+- **Giảng viên:** Người dạy môn học. Cần công cụ để tạo nhanh đáp án chuẩn cho các bài tập, đề thi, hoặc dùng để demo trực quan trên lớp.
 
 ## 4. User Stories (MVP)
-
 | ID | Module | User Story |
 |---|---|---|
-| **US01** | Nhập liệu | Là sinh viên, tôi muốn nhập tập hợp các tiền đề và kết luận dưới dạng văn bản để hệ thống xử lý. |
-| **US02** | Xử lý CNF | Là sinh viên, tôi muốn xem các bước biến đổi công thức sang dạng chuẩn hội (CNF) để đối chiếu với bài làm. |
-| **US03** | Hợp giải | Là sinh viên, tôi muốn xem dãy các bước hợp giải tìm mâu thuẫn để hiểu cách chứng minh. |
-| **US04** | Giới hạn | Là người dùng, tôi muốn biết số lượt kiểm tra còn lại trong ngày để điều phối việc học tập. |
-| **US05** | Tài nguyên | Là sinh viên, tôi muốn xem các bài tập mẫu có lời giải chi tiết để luyện tập thêm. |
+| US01 | Nhập liệu | Là sinh viên, tôi muốn nhập tập công thức ban đầu (tiền đề và kết luận) dưới dạng văn bản để hệ thống bắt đầu kiểm tra. |
+| US02 | Xem kết quả CNF | Là sinh viên, tôi muốn xem chi tiết từng bước chuẩn hóa CNF của các công thức đã nhập để đối chiếu với các bước tôi tự làm. |
+| US03 | Xem kết quả CNF | Là sinh viên, tôi muốn nhận được cảnh báo (màu Đỏ kèm giải thích) nếu công thức nhập vào sai cú pháp để tôi có thể sửa lại. |
+| US04 | Xem kết quả Hợp giải | Là sinh viên, tôi muốn xem dãy các bước hợp giải (từng cặp mệnh đề) và kết luận cuối cùng (có mâu thuẫn hay không) để biết suy diễn của mình đúng hay sai. |
+| US05 | Quản lý lượt dùng | Là sinh viên, tôi muốn biết mình còn bao nhiêu lượt kiểm tra trong ngày để có kế hoạch sử dụng hợp lý. |
 
-## 5. Yêu cầu chức năng (Functional Requirements)
+## 5. Yêu cầu chức năng (Functional Requirements - FR)
+### FR1. Module Giao diện & Nhập liệu
+- **FR1.1 Landing Page:** Hiển thị giới thiệu ngắn gọn về ứng dụng và nút "Nhập công thức logic".
+- **FR1.2 Form nhập liệu:**
+  - Textarea để nhập tập công thức giả thiết (mỗi dòng một công thức).
+  - Input để nhập công thức kết luận.
+  - Nút "Chuẩn hóa & kiểm tra".
+  - Hỗ trợ các ký hiệu logic cơ bản (AND, OR, NOT, IMPLY, EQUIVALENT).
 
-### FR1: Module Nhập liệu & Landing
-- Landing page với 2 lựa chọn chính.
-- Hỗ trợ ký hiệu: `~` (NOT), `&` (AND), `|` (OR), `->` (IMPLY), `<->` (EQUIVALENT).
-- Cho phép chọn loại logic (Mệnh đề là mặc định cho MVP).
+### FR2. Module Xử lý CNF (Bước 1)
+- **FR2.1 Hiển thị công thức gốc:** Hiển thị lại các công thức người dùng đã nhập.
+- **FR2.2 Hiển thị các bước chuẩn hóa:** Trình bày từng bước biến đổi (loại bỏ kéo theo, phủ định, phân phối) cho đến khi ra dạng CNF.
+- **FR2.3 Đánh giá trạng thái:**
+  - Trạng thái Xanh: Nếu công thức hợp lệ và chuẩn hóa thành công.
+  - Trạng thái Đỏ: Nếu công thức sai cú pháp, chỉ ra lỗi ở đâu và gợi ý cách sửa.
 
-### FR2: Module Xử lý CNF
-- Hiển thị công thức ban đầu.
-- Hiển thị các bước biến đổi chi tiết (Tên quy tắc + Công thức sau biến đổi).
-- Trạng thái: "CNF đúng" (Xanh) hoặc "CNF không đúng" (Đỏ + Giải thích).
+### FR3. Module Xử lý Hợp giải Robinson (Bước 2)
+- **FR3.1 Chuẩn bị tập mệnh đề:** Tự động thêm phủ định của kết luận vào tập mệnh đề đã chuẩn hóa CNF.
+- **FR3.2 Thực hiện hợp giải:** Tìm các cặp mệnh đề có literal trái dấu để hợp giải.
+- **FR3.3 Hiển thị kết quả:**
+  - In ra dãy hợp giải theo từng bước (Mệnh đề 1 + Mệnh đề 2 -> Mệnh đề kết quả).
+  - Kết luận cuối cùng: Nếu ra mệnh đề rỗng (mâu thuẫn) -> "Suy diễn đúng". Nếu không thể hợp giải tiếp -> "Suy diễn sai".
 
-### FR3: Module Hợp giải Robinson
-- Thêm phủ định kết luận vào tập mệnh đề.
-- Hiển thị dãy hợp giải (Clause i, Clause j -> Clause k).
-- Kết luận: "Suy diễn đúng" (Có mâu thuẫn $\square$) hoặc "Suy diễn sai".
+### FR4. Module Quản lý lượt dùng
+- **FR4.1 Đếm lượt dùng:** Theo dõi số lần nhấn "Chuẩn hóa & kiểm tra" dựa trên IP (hoặc LocalStorage cho frontend MVP).
+- **FR4.2 Thanh thông báo:** Hiển thị số lượt còn lại (VD: "Bạn còn 12/20 lượt kiểm tra hôm nay").
+- **FR4.3 Chặn sử dụng:** Khi hết lượt, vô hiệu hóa nút kiểm tra và hiển thị thông báo yêu cầu đợi đến ngày hôm sau.
 
-### FR4: Module Tài nguyên
-- Danh sách bài tập Robinson mẫu.
-- Lời giải chi tiết từng bước cho mỗi bài tập.
-- Nút "Tải bài làm mẫu" (File JSON/Ảnh).
+## 6. Acceptance Criteria (Tiêu chí nghiệm thu)
+| ID | User Story | Acceptance Criteria (Given - When - Then) |
+|---|---|---|
+| AC01.1 | US01 | **Given** người dùng đang ở trang Nhập liệu<br>**When** người dùng nhập tập tiền đề hợp lệ, kết luận hợp lệ và nhấn "Chuẩn hóa & kiểm tra"<br>**Then** hệ thống chuyển sang trạng thái loading và gọi API xử lý. |
+| AC02.1 | US02 | **Given** hệ thống đã xử lý xong dữ liệu hợp lệ<br>**When** người dùng xem phần "Kết quả Bước 1"<br>**Then** hệ thống hiển thị danh sách các bước biến đổi CNF với trạng thái màu Xanh. |
+| AC03.1 | US03 | **Given** người dùng nhập công thức sai cú pháp (VD: thiếu ngoặc)<br>**When** người dùng nhấn "Chuẩn hóa & kiểm tra"<br>**Then** hệ thống hiển thị thông báo lỗi màu Đỏ, chỉ ra vị trí lỗi và không gọi API hợp giải. |
+| AC04.1 | US04 | **Given** hệ thống đã hoàn thành chuẩn hóa CNF thành công<br>**When** người dùng xem phần "Kết quả Bước 2"<br>**Then** hệ thống hiển thị danh sách các cặp mệnh đề được hợp giải và dòng kết luận "Suy diễn đúng" hoặc "Suy diễn sai". |
+| AC05.1 | US05 | **Given** người dùng truy cập vào ứng dụng<br>**When** người dùng nhìn lên thanh công cụ/header<br>**Then** hệ thống hiển thị dòng chữ "Bạn còn X/20 lượt kiểm tra hôm nay". |
+| AC05.2 | US05 | **Given** người dùng đã sử dụng hết 20 lượt trong ngày<br>**When** người dùng cố gắng nhấn "Chuẩn hóa & kiểm tra"<br>**Then** hệ thống chặn thao tác và hiển thị thông báo "Bạn đã hết lượt, vui lòng quay lại vào ngày mai". |
 
-## 6. Acceptance Criteria (Given-When-Then)
+## 7. Yêu cầu phi chức năng (Non-functional Requirements)
+- **Hiệu năng (Performance):** Thời gian phản hồi từ khi nhấn nút kiểm tra đến khi hiển thị kết quả (CNF & Hợp giải) không vượt quá 3 giây đối với các bài toán cơ bản.
+- **Giao diện (Usability):** Giao diện thân thiện, rõ ràng, phù hợp với sinh viên. Sử dụng màu sắc để phân biệt trạng thái (Xanh/Đỏ). Responsive tốt trên cả Desktop và Mobile. Sử dụng LaTeX (KaTeX) để render các ký tự logic ($\forall, \exists, \neg, \vee, \wedge, \rightarrow, \leftrightarrow$) một cách chuyên nghiệp thay vì text thuần.
+- **Độ tin cậy (Reliability):** Engine logic phải đảm bảo tính chính xác tuyệt đối theo các quy tắc toán học của thuật toán Robinson.
 
-| User Story | Acceptance Criteria |
-|---|---|
-| **US01** | **Given:** Người dùng ở trang Dashboard. **When:** Nhập các tiền đề `p->q`, `p` và kết luận `q`, nhấn "Kiểm tra". **Then:** Hệ thống chấp nhận và bắt đầu xử lý. |
-| **US02** | **Given:** Công thức đầu vào hợp lệ. **When:** Hệ thống thực hiện chuẩn hóa. **Then:** Hiển thị các bước biến đổi kèm trạng thái Xanh/Đỏ. |
-| **US03** | **Given:** Tập mệnh đề CNF đã sẵn sàng. **When:** Chạy thuật toán Robinson. **Then:** Hiển thị bảng dãy hợp giải và kết luận cuối cùng. |
-| **US04** | **Given:** Người dùng truy cập Dashboard. **When:** Nhìn vào thanh thông báo. **Then:** Thấy số lượt còn lại (VD: "Bạn còn 15/20 lượt hôm nay"). |
-| **US05** | **Given:** Người dùng ở trang Tài nguyên. **When:** Chọn một bài tập mẫu. **Then:** Xem được đề bài và lời giải chi tiết từng bước. |
-
-## 7. Gợi ý Stack công nghệ
-- **Frontend:** React (TypeScript), Tailwind CSS, Lucide React, Motion.
-- **Backend:** Python + FastAPI (Ưu tiên cho logic engine).
-- **Engine Logic:** Python (ast, pyparsing, networkx).
-- **Cơ sở dữ liệu:** SQLite (Lưu lượt dùng & bài tập mẫu).
-
-## 8. API Assumptions
-- `POST /api/parse`: Nhận text -> Trả về AST.
-- `POST /api/cnf`: Nhận AST -> Trả về quy trình chuẩn hóa.
-- `POST /api/resolve`: Nhận tập mệnh đề -> Trả về sequence hợp giải + cây mâu thuẫn.
-- `POST /api/ocr` (Phase 3): Nhận ảnh -> Trả về text logic.
+## 8. API Assumptions (Giả định API)
+Các API dự kiến sẽ được xử lý thông qua Gemini API (LLM) đóng vai trò là Inference Engine:
+- `POST /generateContent`: Gửi prompt chứa "Mệnh đề cho trước" và "Kết luận cần chứng minh" tới model `gemini-2.5-flash`.
+- Model sẽ trả về một chuỗi JSON hợp lệ chứa danh sách các bước (`steps`), kết hợp cả quá trình chuẩn hóa CNF và hợp giải Robinson.
+- Frontend sẽ parse JSON này và hiển thị lên giao diện.
