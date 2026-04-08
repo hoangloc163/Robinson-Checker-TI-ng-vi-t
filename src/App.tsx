@@ -121,7 +121,14 @@ export default function App() {
     setResults(null);
 
     try {
-      const ai = new GoogleGenAI({ apiKey: process.env.GEMINI_API_KEY });
+      const apiKey = process.env.GEMINI_API_KEY;
+      if (!apiKey || apiKey === 'undefined' || apiKey === '') {
+        setError("Lỗi cấu hình: Không tìm thấy GEMINI_API_KEY. Vui lòng thêm GEMINI_API_KEY vào phần Environment Variables trên Vercel và redeploy.");
+        setIsProcessing(false);
+        return;
+      }
+
+      const ai = new GoogleGenAI({ apiKey });
       
       const prompt = `Bạn là một chuyên gia logic học và là một bộ máy suy diễn (Inference Engine) phục vụ cho một ứng dụng Web giáo dục.
 Nhiệm vụ của bạn là giải các bài toán logic mệnh đề bằng thuật toán hợp giải Robinson (Resolution Algorithm) và trả về kết quả ĐỘC QUYỀN dưới định dạng JSON để Frontend hiển thị từng bước cho sinh viên.
